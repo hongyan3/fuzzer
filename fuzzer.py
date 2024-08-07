@@ -47,7 +47,7 @@ class CanFuzzer:
                     data.append(int(res, 2))
                 if duration is not None:
                     time.sleep(duration)
-                # self.send_message(can_interface, message_id, data)
+                self.send_message(can_interface, message_id, data)
                 print(['0x'+hex(i)[2:].zfill(2) for i in data])  # 打印Hex类型的data
 
     @staticmethod
