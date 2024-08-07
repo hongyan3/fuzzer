@@ -27,5 +27,9 @@ class SocketCan(CanInterface):
         msg = can.Message(arbitration_id=message_id, data=data, timestamp=timestamp)
         self.__bus.send(msg)
 
-    def receive_message(self) -> (str, list, float):
-        pass
+    def receive_message(self, timeout=None) -> (str, list, float):
+        if timeout is None:
+            msg = self.__bus.recv(0.5)
+        else:
+            msg = self.__bus.recv(timeout)
+        return msg.arbitration_id, msg.data, msg.timestamp

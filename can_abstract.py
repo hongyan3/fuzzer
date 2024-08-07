@@ -25,7 +25,7 @@ class CanInterface(ABC):
         pass
 
     @abstractmethod
-    def receive_message(self) -> (str, list, float):
+    def receive_message(self, timeout=None) -> (str, list, float):
         """
         接收CAN消息
 

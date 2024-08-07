@@ -1,3 +1,5 @@
+import time
+
 import cantools.database
 
 from dbc_parser import DbcParser
@@ -8,7 +10,7 @@ class CanFuzzer:
         parser = DbcParser(file_path)
         self.__messages = parser.parse_dbc_file()
 
-    def generate_random_message(self, can_interface, message_id):
+    def random_message_fuzz(self, can_interface, message_id):
         """
         随机Fuzz
 
@@ -16,7 +18,7 @@ class CanFuzzer:
         """
         pass
 
-    def generate_order_message(self, can_interface, message_id):
+    def order_message_fuzz(self, can_interface, message_id, duration=None):
         """
         顺序Fuzz
 
@@ -43,8 +45,10 @@ class CanFuzzer:
                     temp = data_map[j:j + 8]
                     res = ''.join(temp)
                     data.append(int(res, 2))
-                # can_interface.send_message(message_id, data)
-                print(['0x'+hex(i)[2:].zfill(2) for i in data])
+                if duration is not None:
+                    time.sleep(duration)
+                # self.send_message(can_interface, message_id, data)
+                print(['0x'+hex(i)[2:].zfill(2) for i in data])  # 打印Hex类型的data
 
     @staticmethod
     def __range_index(start, length) -> (int, int):
