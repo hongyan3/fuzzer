@@ -32,21 +32,27 @@ class CanFuzzer:
             return
         for sig in message.signals:
             print('Start fuzzing with {}...'.format(sig.name))
-            start = sig.start - sig.length + 1
-            end = sig.start
+            start, end = self.__range_index(sig.start, sig.length)
             for i in range(2 ** sig.length):
-                data_map = ['0' for _ in range(64)]
+                data_map = ['0'] * 64
                 data = []
                 bin_str = format(i, '0{}b'.format(sig.length))
                 bin_list = [i for i in bin_str]
                 data_map[start:end + 1] = bin_list
                 for j in range(0, 64, 8):
                     temp = data_map[j:j + 8]
-                    temp = temp[::-1]
                     res = ''.join(temp)
                     data.append(int(res, 2))
-                can_interface.send_message(message_id, data)
-                print([hex(i) for i in data])
+                # can_interface.send_message(message_id, data)
+                print(['0x'+hex(i)[2:].zfill(2) for i in data])
+
+    @staticmethod
+    def __range_index(start, length) -> (int, int):
+        group = start // 8
+        index_group = start % 8
+        left = group * 8 + (7 - index_group)
+        right = left + length - 1
+        return left, right
 
     @staticmethod
     def send_message(can_interface, message_id, data):
@@ -64,5 +70,5 @@ class CanFuzzer:
     def __signal_matrix(data):
         for i in range(0, len(data), 8):
             temp = data[i:i + 8]
-            print(temp[::-1])
-        print()
+            print(temp)
+        print('')
