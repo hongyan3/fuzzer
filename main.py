@@ -1,17 +1,15 @@
 from fuzzer import CanFuzzer
-from can_device import SocketCan
-from can_monitor import CanMonitor
-import threading
-
+from can_device import SocketCan, TosunCan
 
 
 def main():
-    can_fuzzer = CanFuzzer(r'/home/zeekr/workspace/DBC/PreZSDB123500_CX1E_EU_800V_PropulsionCAN_230821.dbc')
-    bus = SocketCan(channel='vcan0', interface='socketcan', bitrate=5000000)
-    bus.connect()
-    monitor = CanMonitor(can_interface=bus)
-    monitor.start()
-    can_fuzzer.order_message_fuzz(can_interface=bus, message_id=0x159, duration=0.1)
+    dbc_file_path = r'C:\Users\LENOVO\Desktop\DBC\PreZSDB123500_DC1E_A2_L2_One_Motor_800V_Prvt_Propulsion_CAN_230821.dbc'
+    ts_can = TosunCan()
+    ts_can.connect()
+    fuzzer = CanFuzzer(can_interface=ts_can)
+    fuzzer.order_message_fuzz(dbc_file_path=dbc_file_path, duration=0.1)
+    while True:
+        pass
 
 
 if __name__ == '__main__':

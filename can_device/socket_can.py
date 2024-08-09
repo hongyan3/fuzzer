@@ -25,9 +25,11 @@ class SocketCan(CanInterface):
             print('Can connection successed.')
         except can.CanError:
             print('Can not connect socket can.')
+            exit(-1)
 
     def close(self):
-        self.__bus.shutdown()
+        self.__send_bus.shutdown()
+        self.__recv_bus.shutdown()
         pass
 
     def send_message(self, message_id, data, timestamp=None):

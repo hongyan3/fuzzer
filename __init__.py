@@ -1,4 +1,4 @@
 from .can_abstract import CanInterface
-from .dbc_parser import DbcParser
+from .dbc_loader import DbcParser
 
 __all__ = ['CanInterface', 'DbcParser']
