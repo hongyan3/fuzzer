@@ -14,7 +14,7 @@ class TosunCan(CanInterface):
 
         :param serial_number: 产品序列号，若电脑只连接一个设备可省略该参数
         """
-        self.__can = c_size_t(0)
+        self.__bus = c_size_t(0)
         if serial_number is not None:
             self.__device_code = serial_number.encode()
         else:
@@ -26,12 +26,12 @@ class TosunCan(CanInterface):
         连接同星设备
         :return:
         """
-        code = tsapp_connect(self.__device_code, self.__can)
+        code = tsapp_connect(self.__device_code, self.__bus)
         if code == 0:
-            print(f'{PREFIX} Device connection successful. handle: {self.__can.value}.')
+            print(f'{PREFIX} Device connection successful. handle: {self.__bus.value}.')
             # 设置波特率
-            tsapp_configure_baudrate_can(self.__can, 0, 500, 1)
-            tsapp_configure_baudrate_can(self.__can, 1, 500, 1)
+            tsapp_configure_baudrate_can(self.__bus, 0, 500, 1)
+            tsapp_configure_baudrate_can(self.__bus, 1, 500, 1)
         elif code == 5:
             print(f'{PREFIX} Device is already connected.')
         else:
@@ -40,7 +40,7 @@ class TosunCan(CanInterface):
             exit(-1)
 
     def close(self):
-        tsapp_disconnect_by_handle(self.__can)
+        tsapp_disconnect_by_handle(self.__bus)
         finalize_lib_tscan()
 
     def send_message(self, message_id, data, timestamp=None):
@@ -51,7 +51,7 @@ class TosunCan(CanInterface):
             FProperties=1,
             FData=data
         )
-        res = tsapp_transmit_can_async(self.__can, message)
+        res = tsapp_transmit_can_async(self.__bus, message)
         if res != 0:
             msg = self.__get_error_description(res)
             print(f'Message send failed, msg: {msg.value.decode()}')
@@ -62,13 +62,13 @@ class TosunCan(CanInterface):
         while True:
             buffer = (TLIBCANFD * 1)()
             buff_size = s32(1)
-            tsfifo_receive_canfd_msgs(self.__can, buffer, buff_size, 0, READ_TX_RX_DEF.ONLY_RX_MESSAGES)
+            tsfifo_receive_canfd_msgs(self.__bus, buffer, buff_size, 0, READ_TX_RX_DEF.ONLY_RX_MESSAGES)
             msg = buffer[0]
-            end_time = time.time()
             if buff_size.value > 0 and msg.FIdentifier > 0:
                 break
-            if (timeout is not None) and (end_time - start_time > timeout):
-                raise TimeoutError
+            if timeout is not None:
+                if time.time() - start_time > timeout:
+                    raise TimeoutError
         msg_id = msg.FIdentifier
         data = []
         timestamp = msg.FTimeUs

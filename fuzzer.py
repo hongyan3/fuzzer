@@ -1,3 +1,4 @@
+import random
 import threading
 import time
 
@@ -14,13 +15,37 @@ class CanFuzzer:
     def __init__(self, can_interface):
         self.__bus = can_interface
 
-    def random_message_fuzz(self, can_interface, message_id):
+    def random_message_fuzz(self, duration=None):
         """
         随机Fuzz
 
         :return:
         """
-        pass
+        while True:
+            msg_id = self.get_random_message_id()
+            data = self.get_random_data()
+            self.__bus.send_message(msg_id, data)
+            if duration is not None:
+                time.sleep(duration)
+            # self.write_file('id: {}, data: {}, timestamp: {}'.format(hex(msg_id), ['0x' + hex(i)[2:].zfill(2) for i in data],
+            #                                                          time.time()))
+
+    @staticmethod
+    def get_random_message_id():
+        msg_id = random.randint(0x0, 0x7FF)
+        return msg_id
+
+    @staticmethod
+    def get_random_data():
+        data_length = random.randint(1, 8)
+        data = [0] * 8
+        for _ in range(data_length):
+            index = random.randint(0, 7)
+            while data[index] != 0:
+                index = random.randint(0, 7)
+            data_byte = random.randint(0, 0xFF)
+            data[index] = data_byte
+        return data
 
     def order_message_fuzz(self, dbc_file_path, duration=None):
         """
@@ -32,7 +57,6 @@ class CanFuzzer:
         """
         dbc = DBCLoader(dbc_file_path)
         # 开启心跳检测
-        self.health_check(0x512, [0x15, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], 0.2)
         for msg in dbc.messages():
             print('Start fuzzing the message: {}, name: {}.'.format(f'0x{msg.frame_id:02x}', msg.name))
             for sig in msg.signals:
@@ -56,21 +80,6 @@ class CanFuzzer:
                     self.__bus.send_message(msg.frame_id, data)
                     # print(['0x' + hex(i)[2:].zfill(2) for i in data])  # 打印Hex类型的data
 
-    def health_check(self, msg_id, data, duration, timeout=0.1):
-        def run():
-            print('Start health checking progress.')
-            while True:
-                try:
-                    self.__bus.send_message(msg_id, data)
-                    self.__bus.receive_message(timeout)
-                except TimeoutError:
-                    print('Health check timeout, current timestamp: {}.'.format(time.time()))
-                    exit(-1)
-                time.sleep(duration)
-        thread = threading.Thread(target=run)
-        thread.daemon = True
-        thread.start()
-
     @staticmethod
     def __range_index(start, length) -> (int, int):
         group = start // 8
@@ -80,20 +89,14 @@ class CanFuzzer:
         return left, right
 
     @staticmethod
-    def send_message(can_interface, message_id, data):
-        """
-        使用CAN接口发送CAN消息
-
-        :param can_interface: CAN接口
-        :param message_id: 消息ID
-        :param data: 要发送的数据
-        :return:
-        """
-        can_interface.send_message(message_id, data)
-
-    @staticmethod
     def __signal_matrix(data):
         for i in range(0, len(data), 8):
             temp = data[i:i + 8]
             print(temp)
         print('')
+
+    @staticmethod
+    def write_file(msg):
+        with open('fuzz.log', 'w') as f:
+            f.write(msg)
+            f.write('\n')
