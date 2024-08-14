@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import requests
@@ -13,7 +14,7 @@ def send_web_msg(msg):
     data = {
         'msgtype': 'text',
         'text': {
-            'content': msg
+            'content': '{} time: {}'.format(msg, time.strftime('%Y-%m-%d %H:%M:%S'), time.localtime())
         }
     }
     requests.post(url=WEB_HOOK, json=data)
@@ -53,6 +54,7 @@ class CanListener:
                 self.is_alive = False
                 send_web_msg('fuzz程序超时')
                 print('Receiving CAN message timed out.Time: {}'.format(time.time()))
+                os._exit(0)
 
     def start(self):
         """

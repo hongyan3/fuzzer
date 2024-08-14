@@ -1,7 +1,7 @@
+import logging
 import random
 import threading
 import time
-
 from dbc_loader import DBCLoader
 
 """
@@ -21,14 +21,25 @@ class CanFuzzer:
 
         :return:
         """
-        while True:
-            msg_id = self.get_random_message_id()
-            data = self.get_random_data()
-            self.__bus.send_message(msg_id, data)
-            if duration is not None:
-                time.sleep(duration)
-            # self.write_file('id: {}, data: {}, timestamp: {}'.format(hex(msg_id), ['0x' + hex(i)[2:].zfill(2) for i in data],
-            #                                                          time.time()))
+        try:
+            while True:
+                msg_id = self.get_random_message_id()
+                data = self.get_random_data()
+                self.__bus.send_message(msg_id, data)
+                log = 'id: {}, data: {}, timestamp: {}'.format(f'0x{msg_id:03x}', [f'0x{i:02x}' for i in data],
+                                                               time.time())
+                self.write_log_file(log)
+                if duration is not None:
+                    time.sleep(duration)
+        except KeyboardInterrupt:
+            print('Program exit.')
+        # while True:
+        #     msg_id = 0x500
+        #     data = [0] * 8
+        #     for i in range(len(data)):
+        #         for j in range(0x100):
+        #             data[i] = j
+        #             self.__bus.send_message(msg_id, data)
 
     @staticmethod
     def get_random_message_id():
@@ -96,7 +107,16 @@ class CanFuzzer:
         print('')
 
     @staticmethod
-    def write_file(msg):
-        with open('fuzz.log', 'w') as f:
-            f.write(msg)
-            f.write('\n')
+    def write_log_file(msg):
+        """循环缓存队列"""
+        with threading.Lock():
+            with open('fuzz.log', 'r') as f:
+                lines = f.readlines()
+            with open('fuzz.log', 'w') as f:
+                # 如果日志文件中的行数达到最大值，则删除第一行
+                if len(lines) >= 1000:
+                    lines.pop(0)
+                # 将新消息追加到文件末尾
+                f.seek(0)
+                f.writelines(lines)
+                f.write(msg + '\n')

@@ -11,7 +11,7 @@ def main():
     listener.start()
     # 开启fuzz
     fuzzer = CanFuzzer(can_interface=ts_can)
-    fuzzer.random_message_fuzz(duration=0.001)
+    fuzzer.random_message_fuzz(0.01)
 
 
 if __name__ == '__main__':
